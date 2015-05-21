@@ -8,22 +8,24 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import com.miniIM.chatroom.ChatRoom;
 import com.miniIM.client.Client;
 import com.miniIM.register.Register;
 
 public class Login extends JFrame{
 	
-	final static int PORT = 23333;
+	final static int PORT = Client.PORT;
 	
 	private JLabel JLServerAddress;
 	private JLabel JLUserID;
 	private JLabel JLUserPWD;
-	private JTextField JTFServerAddress;
-	private JTextField JTFUserID;
-	private JPasswordField JPFUserPWD;
+	private JTextField inputServerAddress;
+	private JTextField inputUserID;
+	private JPasswordField inputUserPWD;
 	private JButton btnLogin;
 	private JButton btnRegister;
 	
@@ -31,9 +33,9 @@ public class Login extends JFrame{
 		JLServerAddress = new JLabel("Server");
 		JLUserID = new JLabel("Username");
 		JLUserPWD = new JLabel("Password");
-		JTFServerAddress = new JTextField();
-		JTFUserID = new JTextField();
-		JPFUserPWD = new JPasswordField();
+		inputServerAddress = new JTextField();
+		inputUserID = new JTextField();
+		inputUserPWD = new JPasswordField();
 		btnLogin = new JButton("Login");
 		btnRegister = new JButton("Register");
 		
@@ -60,10 +62,10 @@ public class Login extends JFrame{
 		JLUserID.setBounds(COLUMN1_X, BEGINNING_ROW_Y+ROW_HEIGHT*1, LABEL_WIDTH_1, LABEL_HEIGHT);
 		JLUserPWD.setBounds(COLUMN1_X, BEGINNING_ROW_Y+ROW_HEIGHT*2, LABEL_WIDTH_1, LABEL_HEIGHT);
 		// set JTextField
-		JTFServerAddress.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*0, LABEL_WIDTH_2, LABEL_HEIGHT);
-		JTFUserID.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*1, LABEL_WIDTH_2, LABEL_HEIGHT);
-		JPFUserPWD.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*2, LABEL_WIDTH_2, LABEL_HEIGHT);
-		JPFUserPWD.setEchoChar('*');
+		inputServerAddress.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*0, LABEL_WIDTH_2, LABEL_HEIGHT);
+		inputUserID.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*1, LABEL_WIDTH_2, LABEL_HEIGHT);
+		inputUserPWD.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*2, LABEL_WIDTH_2, LABEL_HEIGHT);
+		inputUserPWD.setEchoChar('*');
 		// set JButton 
 		final int BUTTON_WIGHT = 90;
 		final int BUTTON_HEIGHT = 20;
@@ -80,8 +82,31 @@ public class Login extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
-				// TODO Auto-generated method stub
-				Client client = new Client(serverAddress, username, password);
+				/* get input from JTextField */
+				String serverAddress = inputServerAddress.getText();
+				String username = inputUserID.getText();
+				String password = new String(inputUserPWD.getPassword());
+				
+				/* judge correctness of input */
+				if (serverAddress.equals("")) {
+					JOptionPane.showMessageDialog(null, JLServerAddress.getText()+" can't be blank.");
+				} else if (username.equals("")) {
+					JOptionPane.showMessageDialog(null, JLUserID.getText()+" can't be blank.");
+				} else if (password.equals("")) {
+					JOptionPane.showMessageDialog(null, JLUserPWD.getText()+" can't be blank.");
+				} else {
+					
+					/* create new client */
+					Client client = new Client(serverAddress, username, password);
+					
+					/* get the correctness of username and password from server */
+					if (client.isLoggedIn()) {
+						Login.this.dispose(); // close login window
+						new ChatRoom(client).setVisible(true); // open new ChatRoom window
+					} else {
+						JOptionPane.showMessageDialog(null, "Cannot connect to server(" + serverAddress + ") or incorrect Username or Password.");
+					}
+				}
 			}
 		});
 		
@@ -89,16 +114,17 @@ public class Login extends JFrame{
 		btnRegister.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				new Register();
+				Login.this.dispose();
+				new Register(Login.this);
 			}
 		});
 		
 		this.add(JLServerAddress);
 		this.add(JLUserID);
 		this.add(JLUserPWD);
-		this.add(JTFServerAddress);
-		this.add(JTFUserID);
-		this.add(JPFUserPWD);
+		this.add(inputServerAddress);
+		this.add(inputUserID);
+		this.add(inputUserPWD);
 		this.add(btnLogin);
 		this.add(btnRegister);
 		this.setVisible(true);

@@ -32,7 +32,7 @@ public class ChatRoom extends JFrame{
 		}
 	}
 	
-	ChatRoom(Client client) {
+	public ChatRoom(Client client) {
 		
 		// set main ChatRoom window property
 		this.setTitle("Chat Room (" + client.USERNAME + ")");
@@ -108,16 +108,6 @@ public class ChatRoom extends JFrame{
 		this.add(userListScrollPane);
 		this.add(btnSend);
 		this.add(btnLogout);
-		this.setVisible(true);
-	}
-	
-	
-	
-	
-	
-	// use for test the frame of Chat Room
-	public static void main(String[] args) {
-		new ChatRoom(new Client("127.0.0.1", "123", "123"));
 	}
 	
 }
