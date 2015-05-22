@@ -36,6 +36,7 @@ public class Server {
 	/* keep client connection */
 	List<Socket> clientConnection = new ArrayList<Socket>();
 	
+	/* Constructor */
 	public Server() {
 		
 		/* create server deviceID */
@@ -110,8 +111,8 @@ public class Server {
 				
 				/* start ObjectInputStream */
 				InputStream is = client.getInputStream();
-//				BufferedInputStream bis = new BufferedInputStream(is);
-				ObjectInputStream in = new ObjectInputStream(is);
+				BufferedInputStream bis = new BufferedInputStream(is);
+				ObjectInputStream in = new ObjectInputStream(bis);
 //				ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
 				System.out.println("/* start ObjectInputStream */");
 				
@@ -128,7 +129,13 @@ public class Server {
 					System.out.println("Packet backPacket = new Packet(Packet.REGISTER_BACK, DEVICE_ID);");
 					Packet backPacket = new Packet(Packet.REGISTER_BACK, DEVICE_ID);
 					System.out.println("backPacket.registerBack(isUserExisted(firstPacket.getUsername()));");
-					backPacket.registerBack(isUserExisted(firstPacket.getUsername()));
+					/* judge is User Existed already */
+					if (isUserExisted(firstPacket.getUsername())) {
+						backPacket.registerBack(true);
+					} else {
+						writeUserInfo(firstPacket.getUsername(), firstPacket.getPassword());// write user info into file
+						backPacket.registerBack(false);
+					}
 					
 					/* send back Packet */
 					System.out.println("/* send back Packet */");
@@ -267,7 +274,7 @@ public class Server {
 					client.close();
 				} catch (IOException e) {
 					System.err.println("Fail to close the stream or the stream had been closed.");
-					e.printStackTrace();
+//					e.printStackTrace();
 				}
 				System.out.println("One client disconnected with the server.");
 				System.out.println("There are " + clientConnection.size() + " connection now after one disconnection.");
@@ -314,7 +321,7 @@ public class Server {
 				System.err.println("Fail to close the Socket or it had closed already.");
 			} catch (InterruptedException e) {
 				System.err.println("Fail to sleep the HeartbeatListener Thread.");
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 			
 		}
@@ -375,7 +382,7 @@ public class Server {
 		}
 	}
 	
-	private void writeUserInfo(String str) {
+	private void writeUserInfo(String username, String password) {
 		File file = new File("userinfo\\userinfo");
 		
 		/* if file does not exist, create the new file */
@@ -392,7 +399,11 @@ public class Server {
 		try {
 			FileWriter fileWriter = new FileWriter(file, true);// use "true" to write the new after the original
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-			bufferedWriter.write(str+"\n");
+			bufferedWriter.write(username + "=" + password + "\n");
+			bufferedWriter.flush();
+			bufferedWriter.close();
+//			fileWriter.flush();
+			fileWriter.close();
 		} catch (IOException e) {
 			System.err.println("Fail to write file");
 			e.printStackTrace();

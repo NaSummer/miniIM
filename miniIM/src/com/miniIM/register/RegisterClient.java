@@ -53,8 +53,8 @@ class RegisterClient {
 			this.out = new ObjectOutputStream(os);
 			// start input stream
 			InputStream is = clientSocket.getInputStream();
-//			BufferedInputStream bis = new BufferedInputStream(is);
-			this.in = new ObjectInputStream(is);
+			BufferedInputStream bis = new BufferedInputStream(is);
+			this.in = new ObjectInputStream(bis);
 			
 			
 			/* register */

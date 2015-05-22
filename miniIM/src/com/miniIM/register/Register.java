@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -136,6 +138,33 @@ public class Register extends JFrame {
 		btnRegister.setBounds(BUTTON_COLUMN1_X, BUTTON_Y, BUTTON_WIGHT, BUTTON_HEIGHT);
 		btnCancel.setBounds(BUTTON_COLUMN2_X, BUTTON_Y, BUTTON_WIGHT, BUTTON_HEIGHT);
 		
+		/* add Enter KeyListener to JPFPWDConfirm */
+		JPFUserPWDConfirm.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode()==KeyEvent.VK_ENTER) {
+					String serverAdd = JTFServerAddress.getText();
+					String username = JTFUserID.getText();
+					String password = new String(JPFUserPWD.getPassword());
+					String confirm = new String(JPFUserPWDConfirm.getPassword());
+					tryRegister(serverAdd, username, password, confirm);
+				}
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
 		/* add Register button Action Listener */
 		btnRegister.addActionListener(new ActionListener() {
 			@Override
@@ -144,39 +173,7 @@ public class Register extends JFrame {
 				String username = JTFUserID.getText();
 				String password = new String(JPFUserPWD.getPassword());
 				String confirm = new String(JPFUserPWDConfirm.getPassword());
-				if (serverAdd.equals("")) {
-					JOptionPane.showMessageDialog(null, "Server Address can't be blank.");
-				} else 	if (username.equals("")) {
-					JOptionPane.showMessageDialog(null, "Username can't be blank.");
-				} else if (password.equals("")) {
-					JOptionPane.showMessageDialog(null, "Password can't be blank.");
-				} else if (confirm.equals("")) {
-					JOptionPane.showMessageDialog(null, "Password Confirm can't be blank.");
-				} else if (!password.equals(confirm)) {
-					JOptionPane.showMessageDialog(null, "Confirm Password is different from the Password.");
-					JPFUserPWD.setText("");
-					JPFUserPWDConfirm.setText("");
-				} else if (password.length()<6) {
-					JOptionPane.showMessageDialog(null, "Password should be longer than 6 charactors.");
-					JPFUserPWD.setText("");
-					JPFUserPWDConfirm.setText("");
-				} else { 
-					
-					/* create Register Client */
-					RegisterClient regClient = new RegisterClient(serverAdd, username, password);
-					
-					/* check success */
-					if (regClient.isUsernameExisted()) {
-						JOptionPane.showMessageDialog(null, "Username is existing.\nPlease try another username.");
-						JTFUserID.requestFocus(); // focus on username TODO
-						JTFUserID.selectAll(); // select username
-					} else {
-						JOptionPane.showMessageDialog(null, "Register Successful.");
-						Register.this.dispose(); // close the Register window.
-						loginWindow.setVisible(true);
-					}
-					
-				}
+				tryRegister(serverAdd, username, password, confirm);
 			}
 		});
 		
@@ -201,6 +198,48 @@ public class Register extends JFrame {
 		this.add(btnCancel);
 		this.setVisible(true);
 		
+	}
+	
+	private void tryRegister(String serverAdd, String username, String password, String confirm) {
+		if (serverAdd.equals("")) {
+			JOptionPane.showMessageDialog(null, "Server Address can't be blank.");
+		} else 	if (username.equals("")) {
+			JOptionPane.showMessageDialog(null, "Username can't be blank.");
+		} else if (password.equals("")) {
+			JOptionPane.showMessageDialog(null, "Password can't be blank.");
+		} else if (confirm.equals("")) {
+			JOptionPane.showMessageDialog(null, "Password Confirm can't be blank.");
+		} else if (!password.equals(confirm)) {
+			JOptionPane.showMessageDialog(null, "Confirm Password is different from the Password.");
+			JPFUserPWD.setText("");
+			JPFUserPWDConfirm.setText("");
+		} else if (password.length()<6) {
+			JOptionPane.showMessageDialog(null, "Password should be longer than 6 charactors.");
+			JPFUserPWD.setText("");
+			JPFUserPWDConfirm.setText("");
+		} else { 
+			
+			/* create Register Client */
+			RegisterClient regClient = new RegisterClient(serverAdd, username, password);
+			
+			/* check success */
+			if (regClient.isUsernameExisted()) {
+				
+				JOptionPane.showMessageDialog(null, "Username is existing.\nPlease try another username.");
+				JTFUserID.requestFocus(); // focus on username TODO
+				JTFUserID.selectAll(); // select username
+				
+			} else {
+				
+				JOptionPane.showMessageDialog(null, "Register Successful.");
+				Register.this.dispose(); // close the Register window.
+				
+				/* fill Server Address and Username in Login window with the registered info after register. */
+				loginWindow.afterRegister(serverAdd, username); 
+				loginWindow.setVisible(true);
+			}
+			
+		}
 	}
 
 }

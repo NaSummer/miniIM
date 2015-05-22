@@ -52,8 +52,8 @@ public class Client {
 			
 			/* start output stream */
 			OutputStream os = clientSocket.getOutputStream();
-			BufferedOutputStream bos = new BufferedOutputStream(os);
-			this.out = new ObjectOutputStream(bos);
+//			BufferedOutputStream bos = new BufferedOutputStream(os);
+			this.out = new ObjectOutputStream(os);
 			
 			/* start input stream */
 			InputStream is = clientSocket.getInputStream();
