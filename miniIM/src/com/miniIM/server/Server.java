@@ -63,7 +63,7 @@ public class Server {
 			
 		} catch (IOException e) {
 			System.err.println("Failed in starting the server.");
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 	
@@ -194,11 +194,11 @@ public class Server {
 			} catch (IOException e) {
 				clientConnection.remove(client);
 				System.err.println("Disconnect with one client.");
-				e.printStackTrace();
+//				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				clientConnection.remove(client);
 				System.err.println("Fail to read first Packet.");
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 	}
@@ -271,7 +271,7 @@ public class Server {
 				clientConnection.remove(client);
 				clientOutputStream.remove(out);
 				userList.remove(user);
-				e.printStackTrace();
+//				e.printStackTrace();
 			} finally {
 				try {
 					clientConnection.remove(client);
@@ -312,8 +312,8 @@ public class Server {
 					tmpOut.writeObject(backPacket);
 					tmpOut.flush();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					System.err.println("Fail to send back message.");
+//					e.printStackTrace();
 				}
 			}
 		}
@@ -405,7 +405,7 @@ public class Server {
 			return false;
 		} catch (IOException e) {
 			System.err.println("Fail to read userinfo from file.");
-			e.printStackTrace();
+//			e.printStackTrace();
 			return true;
 		}
 	}
@@ -427,7 +427,7 @@ public class Server {
 			return false;
 		} catch (IOException e) {
 			System.err.println("Fail to read userinfo from file.");
-			e.printStackTrace();
+//			e.printStackTrace();
 			return true;
 		}
 	}
@@ -441,7 +441,7 @@ public class Server {
 				file.createNewFile();
 			} catch (IOException e) {
 				System.err.println("Fail to create new file (userinfo)");
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 		
@@ -456,7 +456,7 @@ public class Server {
 			fileWriter.close();
 		} catch (IOException e) {
 			System.err.println("Fail to write file");
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 		
 	}
@@ -470,7 +470,7 @@ public class Server {
 				file.createNewFile();
 			} catch (IOException e) {
 				System.err.println("Fail to create new file (userinfo)");
-				e.printStackTrace();
+//				e.printStackTrace();
 				return null;
 			} 
 		}
@@ -480,7 +480,7 @@ public class Server {
 			return new BufferedReader(new FileReader(file));
 		} catch (FileNotFoundException e) {
 			System.err.println("Fail to read Userinfo");
-			e.printStackTrace();
+//			e.printStackTrace();
 			return null;
 		}
 	}
