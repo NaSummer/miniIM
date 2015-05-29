@@ -4,16 +4,25 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import com.miniIM.client.Client;
+import com.miniIM.coder.SHA;
+import com.miniIM.login.Login;
+
 public class Register extends JFrame {
 	
-final static int PORT = 23333;
+	final static int PORT = Client.PORT;
 	
 	private JLabel JLServerAddress;
 	private JLabel JLUserID;
@@ -26,7 +35,11 @@ final static int PORT = 23333;
 	private JButton btnRegister;
 	private JButton btnCancel;
 	
-	public Register() {
+	Login loginWindow;
+	
+	public Register(Login loginWindow) {
+		
+		this.loginWindow = loginWindow;
 		
 		JLServerAddress = new JLabel("Server");
 		JLUserID = new JLabel("Username");
@@ -48,7 +61,50 @@ final static int PORT = 23333;
 		this.setResizable(false);
 		this.setLayout(null);
 		this.setTitle("Register");
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.addWindowListener(new WindowListener() {
+			
+			@Override
+			public void windowOpened(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {
+				Register.this.dispose();
+				Register.this.loginWindow.setVisible(true);
+			}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		
 		final int COLUMN1_X = 30;
 		final int BEGINNING_ROW_Y = 30;
@@ -57,19 +113,22 @@ final static int PORT = 23333;
 		final int LABEL_WIDTH_1 = 120;
 		final int COLUMN2_X = COLUMN1_X + LABEL_WIDTH_1;
 		final int LABEL_WIDTH_2 = WIDTH - (COLUMN1_X*2+LABEL_WIDTH_1+5);
-		// set JLable
+		
+		/* set JLable */
 		JLServerAddress.setBounds(COLUMN1_X, BEGINNING_ROW_Y+ROW_HEIGHT*0, LABEL_WIDTH_1, LABEL_HEIGHT);
 		JLUserID.setBounds(COLUMN1_X, BEGINNING_ROW_Y+ROW_HEIGHT*1, LABEL_WIDTH_1, LABEL_HEIGHT);
 		JLUserPWD.setBounds(COLUMN1_X, BEGINNING_ROW_Y+ROW_HEIGHT*2, LABEL_WIDTH_1, LABEL_HEIGHT);
 		JLUserPWDConfirm.setBounds(COLUMN1_X, BEGINNING_ROW_Y+ROW_HEIGHT*3, LABEL_WIDTH_1, LABEL_HEIGHT);
-		// set JTextField
+		
+		/* set JTextField */
 		JTFServerAddress.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*0, LABEL_WIDTH_2, LABEL_HEIGHT);
 		JTFUserID.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*1, LABEL_WIDTH_2, LABEL_HEIGHT);
 		JPFUserPWD.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*2, LABEL_WIDTH_2, LABEL_HEIGHT);
 		JPFUserPWD.setEchoChar('*');
 		JPFUserPWDConfirm.setBounds(COLUMN2_X, BEGINNING_ROW_Y+ROW_HEIGHT*3, LABEL_WIDTH_2, LABEL_HEIGHT);
 		JPFUserPWDConfirm.setEchoChar('*');
-		// set JButton 
+		
+		/* set JButton */
 		final int BUTTON_WIGHT = 90;
 		final int BUTTON_HEIGHT = 20;
 //		final int BUTTON_Y = (BEGINNING_ROW_Y+ROW_HEIGHT*3) + (( HIGHT - (BEGINNING_ROW_Y+ROW_HEIGHT*3) )/2) - (BUTTON_HEIGHT/2);
@@ -80,20 +139,51 @@ final static int PORT = 23333;
 		btnRegister.setBounds(BUTTON_COLUMN1_X, BUTTON_Y, BUTTON_WIGHT, BUTTON_HEIGHT);
 		btnCancel.setBounds(BUTTON_COLUMN2_X, BUTTON_Y, BUTTON_WIGHT, BUTTON_HEIGHT);
 		
-		// add Login button Action Listener
-		btnRegister.addActionListener(new ActionListener() {
+		/* add Enter KeyListener to JPFPWDConfirm */
+		JPFUserPWDConfirm.addKeyListener(new KeyListener() {
+			
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void keyTyped(KeyEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode()==KeyEvent.VK_ENTER) {
+					String serverAdd = JTFServerAddress.getText();
+					String username = JTFUserID.getText();
+					String password = new String(JPFUserPWD.getPassword());
+					String confirm = new String(JPFUserPWDConfirm.getPassword());
+					tryRegister(serverAdd, username, password, confirm);
+				}
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
 				// TODO Auto-generated method stub
 				
 			}
 		});
 		
-		// add Register button Action Listener
+		/* add Register button Action Listener */
+		btnRegister.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String serverAdd = JTFServerAddress.getText();
+				String username = JTFUserID.getText();
+				String password = new String(JPFUserPWD.getPassword());
+				String confirm = new String(JPFUserPWDConfirm.getPassword());
+				tryRegister(serverAdd, username, password, confirm);
+			}
+		});
+		
+		/* add Cancel button Action Listener */
 		btnCancel.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				Register.this.dispose();
+				loginWindow.setVisible(true);
 			}
 		});
 		
@@ -109,6 +199,58 @@ final static int PORT = 23333;
 		this.add(btnCancel);
 		this.setVisible(true);
 		
+	}
+	
+	private void tryRegister(String serverAdd, String username, String password, String confirm) {
+		if (serverAdd.equals("")) {
+			JOptionPane.showMessageDialog(null, "Server Address can't be blank.");
+		} else 	if (username.equals("")) {
+			JOptionPane.showMessageDialog(null, "Username can't be blank.");
+		} else if (password.equals("")) {
+			JOptionPane.showMessageDialog(null, "Password can't be blank.");
+		} else if (confirm.equals("")) {
+			JOptionPane.showMessageDialog(null, "Password Confirm can't be blank.");
+		} else if (!password.equals(confirm)) {
+			JOptionPane.showMessageDialog(null, "Confirm Password is different from the Password.");
+			JPFUserPWD.setText("");
+			JPFUserPWDConfirm.setText("");
+		} else if (password.length()<6) {
+			JOptionPane.showMessageDialog(null, "Password should be longer than 6 charactors.");
+			JPFUserPWD.setText("");
+			JPFUserPWDConfirm.setText("");
+		} else { 
+			
+//			/* coder */
+//			SHA encoder = new SHA();
+//			
+//			try {
+//				password = new String(encoder.encryptSHA(password.getBytes()));
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+			
+			/* create Register Client */
+			RegisterClient regClient = new RegisterClient(serverAdd, username, password);
+			
+			/* check success */
+			if (regClient.isUsernameExisted()) {
+				
+				JOptionPane.showMessageDialog(null, "Username is existing.\nPlease try another username.");
+				JTFUserID.requestFocus(); // focus on username TODO
+				JTFUserID.selectAll(); // select username
+				
+			} else {
+				
+				JOptionPane.showMessageDialog(null, "Register Successful.");
+				Register.this.dispose(); // close the Register window.
+				
+				/* fill Server Address and Username in Login window with the registered info after register. */
+				loginWindow.afterRegister(serverAdd, username); 
+				loginWindow.setVisible(true);
+			}
+			
+		}
 	}
 
 }

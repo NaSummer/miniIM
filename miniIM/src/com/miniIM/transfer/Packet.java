@@ -1,7 +1,14 @@
 package com.miniIM.transfer;
 
-public class Packet {
+import java.io.Serializable;
+
+public class Packet implements Serializable{
 		
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3900021794281181446L;
+	
 	public final static int HEARTBEAT = 0;
 	public final static int HEARTBEAT_BACK = 1;
 	public final static int LOGIN = 2;
@@ -21,6 +28,17 @@ public class Packet {
 	public final long DEVICE_ID;
 	public final boolean IS_READ_BY_SERVER;
 	
+	/* Variable */
+	private String[][] userList;
+	private String username; // login, register, allChat,
+	private String password; // login, register
+	private boolean isLoginSuccessful; // loginBack, registerBack
+	private boolean isUsernameExisted; // loginBack, registerBack
+	private String message; // allChat
+	
+	
+
+
 	public Packet(final int TYPE, final long DEVICE_ID) {
 		this.TYPE = TYPE;
 		this.DEVICE_ID = DEVICE_ID;
@@ -31,9 +49,8 @@ public class Packet {
 		}
 	}
 	
-	// variables for login and register
-	private String username;
-	private String password;
+	
+	/* login */
 	public void login(String username, String password) {
 		if (this.TYPE==LOGIN) {
 			this.username = username;
@@ -41,6 +58,20 @@ public class Packet {
 		}
 	}
 	
+	/* login back */
+	public void loginBack(boolean isSuccessful, String[][] userList) {
+		if (this.TYPE==LOGIN_BACK) {
+			this.isLoginSuccessful = isSuccessful;
+			this.userList = userList;
+		}
+	}
+	public void loginBack(boolean isSuccessful) {
+		if (this.TYPE==LOGIN_BACK) {
+			this.isLoginSuccessful = isSuccessful;
+		}
+	}
+	
+	/* register */
 	public void register(String username, String password) {
 		if (this.TYPE==REGISTER) {
 			this.username = username;
@@ -48,25 +79,63 @@ public class Packet {
 		}
 	}
 	
-	private String getUsername() {
-		return this.username;
-	}
-	
-	// variables for register back, judge whether username existed
-	private boolean isUsernameExisted;
+	/* register back */
 	public void registerBack(Boolean isUsernameExisted) {
 		if (this.TYPE==REGISTER_BACK) {
 			this.isUsernameExisted = isUsernameExisted;
 		}
 	}
-	public boolean isUsernameExisted() {
-		return this.isUsernameExisted;
+	
+	/* room chat */
+	public void setRoomChat(String message, String username) {
+		this.message = message;
+		this.username = username;
+	}
+	
+	/* heartbeat back */
+	public void heartbeatBack(String[][] userList) {
+		this.userList = userList;
 	}
 	
 	
-	// TODO
-	public void roomChat() {
-		
+	public void setUserList(String[][] userList) {
+		this.userList = userList;
+	}
+	
+	public String[][] getUserList() {
+		return this.userList;
+	}
+	
+	public void addMessage(String str, String username) {
+		this.message = str;
+		this.username = username;
+	}
+	
+	public String getMessage() {
+		return this.message;
+	}
+	
+	public String getUsername() {
+		return username;
+	}
+	
+	
+	public String getPassword() {
+		if ( (this.TYPE==LOGIN) || (this.TYPE==REGISTER) ) {
+			return password;
+		} else {
+			return null;
+		}
+	}
+	
+	
+	public boolean isLoginSuccessful() {
+		return isLoginSuccessful;
+	}
+	
+	
+	public boolean isUsernameExisted() {
+		return isUsernameExisted;
 	}
 	
 }
