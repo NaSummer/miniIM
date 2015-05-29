@@ -17,6 +17,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import com.miniIM.client.Client;
+import com.miniIM.coder.SHA;
 import com.miniIM.login.Login;
 
 public class Register extends JFrame {
@@ -218,6 +219,16 @@ public class Register extends JFrame {
 			JPFUserPWD.setText("");
 			JPFUserPWDConfirm.setText("");
 		} else { 
+			
+//			/* coder */
+//			SHA encoder = new SHA();
+//			
+//			try {
+//				password = new String(encoder.encryptSHA(password.getBytes()));
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 			
 			/* create Register Client */
 			RegisterClient regClient = new RegisterClient(serverAdd, username, password);

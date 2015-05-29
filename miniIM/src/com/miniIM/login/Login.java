@@ -16,6 +16,7 @@ import javax.swing.JTextField;
 
 import com.miniIM.chatroom.ChatRoom;
 import com.miniIM.client.Client;
+import com.miniIM.coder.SHA;
 import com.miniIM.register.Register;
 
 public class Login extends JFrame{
@@ -115,10 +116,20 @@ public class Login extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
+//				/* coder */
+//				SHA encode = new SHA();
+				
 				/* get input from JTextField */
 				String serverAddress = inputServerAddress.getText();
 				String username = inputUserID.getText();
 				String password = new String(inputUserPWD.getPassword());
+//				String password = "";
+//				try {
+//					password = new String(encode.encryptSHA(inputUserPWD.getPassword().toString().getBytes()));
+//				} catch (Exception e1) {
+//					// TODO Auto-generated catch block
+//					e1.printStackTrace();
+//				}
 				
 				tryLogin(serverAddress, username, password);
 			}

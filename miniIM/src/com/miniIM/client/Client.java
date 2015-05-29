@@ -9,16 +9,16 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
-import com.miniIM.transfer.Packet;
+import com.miniIM.transfer.*;
 
 public class Client {
 	
 	public final static int PORT = 23333;
 	
-//	BufferedReader br;
-//	PrintStream ps;
 	Socket clientSocket;
 	ObjectOutputStream out;
 	ObjectInputStream in;
@@ -28,6 +28,10 @@ public class Client {
 	public final String SERVER_ADDRESS;
 	public final String USERNAME;
 	public final long DEVICE_ID;
+	
+	private String[][] userList = new String[0][0];
+	public List<String> messageList = new ArrayList<String>();
+	private List<String> sendList = new ArrayList<String>();
 	
 	public Client(final String SERVER_ADDRESS, final String USERNAME, final String PASSWORD) {
 		
@@ -80,16 +84,10 @@ public class Client {
 					
 					if (isLoggedIn) {
 						
-						/* start sending heart beat */
-						new Thread(new Heartbeat()).start();
-						
-						/* start listening to server's heart beat */
-						HeartbeatListener hbl = new HeartbeatListener(clientSocket, in, out);
-						new Thread(hbl).start();
-						
 						System.out.println(USERNAME + " log in successfully.");
 						
-						// TODO
+						/* start handle received packet */
+						new Thread(new HandlePacket()).start();
 						
 					} else {
 						System.err.println("Fail to log in.");
@@ -119,10 +117,88 @@ public class Client {
 		}
 	}
 	
-	public boolean isLoggedIn() {
-		return this.isLoggedIn;
+	/* handle received packet */
+	class HandlePacket extends Thread {
+		
+		@Override
+		public void run() {
+			
+			/* start sending heart beat */
+			new Thread(new Heartbeat()).start();
+			
+			/* start listening to server's heart beat */
+			HeartbeatListener hbl = new HeartbeatListener();
+			new Thread(hbl).start();
+			
+			/* start MessageSender to listen to sendList*/
+			new Thread(new MessageSender()).start();
+			
+			try {
+				
+				while (true) {
+					
+					/* read received Packet */
+					Packet receivedPacket = (Packet) in.readObject();
+					
+					switch (receivedPacket.TYPE) {
+					case Packet.HEARTBEAT_BACK:
+						hbl.setLastPacketTime(System.currentTimeMillis());
+						userList = receivedPacket.getUserList();
+						break;
+
+					case Packet.CHATROOM_MESSAGE_BACK:
+						messageList.add(receivedPacket.getUsername() + DEVICE_ID + receivedPacket.getMessage());
+						break;
+						
+					default:
+						break;
+					}
+					
+				}
+				
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+	}
+
+	/* Message Sender*/
+	class MessageSender extends Thread {
+		@Override
+		public void run() {
+			while (true) {
+				while (!sendList.isEmpty()) {
+					Packet outPacket = new Packet(Packet.CHATROOM_MESSAGE, DEVICE_ID);
+					outPacket.addMessage(sendList.get(0), USERNAME);
+					try {
+						out.writeObject(outPacket);
+						out.flush();
+						sendList.remove(0);
+					} catch (IOException e) {
+						System.err.println("[Client "+USERNAME+"] Fail to send message.");
+						if (clientSocket.isClosed()) {
+							e.printStackTrace();
+						}
+					}
+				}
+				
+				try {
+					MessageSender.sleep(500);
+				} catch (InterruptedException e) {
+					System.err.println("[MessageSender "+USERNAME+"] Fail to sleep.");
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 	
+	/* Send Heartbeat to server */
 	class Heartbeat extends Thread {
 		final int INTERVAL_TIME = 15*1000;
 		
@@ -148,18 +224,14 @@ public class Client {
 		
 	}
 	
+	/* listen to heartbeat from server */
 	class HeartbeatListener extends Thread {
-		Socket client;
-		ObjectInputStream in;
-		ObjectOutputStream out;
 		private long lastPacketTime;
 		final int INTERVAL_TIME = 1*1000;
 		final long TIMEOUT = 40*1000L;
 		
-		public HeartbeatListener(Socket client, ObjectInputStream ois, ObjectOutputStream oos) {
-			this.client = client;
-			this.in = ois;
-			this.out = oos;
+		public HeartbeatListener() {
+			
 		}
 		
 		@Override
@@ -172,8 +244,12 @@ public class Client {
 					if (System.currentTimeMillis()-lastPacketTime>TIMEOUT) {
 						in.close();
 						out.close();
-						client.close();
+						clientSocket.close();
 						System.out.println("Lost one connection.");
+						
+						/* TODO reconncet */
+//						System.out.println("Try to Reconnect");
+						
 						break;
 					}
 					HeartbeatListener.sleep(INTERVAL_TIME);
@@ -191,6 +267,22 @@ public class Client {
 		public void setLastPacketTime(long t) {
 			this.lastPacketTime = t;
 		}
+	}
+	
+	
+	/* get user list */
+	public String[][] getUserList() {
+		return this.userList;
+	}
+	
+	/* add message into sendList to send */
+	public void sendMessage(String str) {
+		this.sendList.add(str);
+	}
+	
+	/*  */
+	public boolean isLoggedIn() {
+		return this.isLoggedIn;
 	}
 	
 }

@@ -1,6 +1,5 @@
 package com.miniIM.server;
 
-import java.awt.Checkbox;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -15,7 +14,6 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -35,6 +33,10 @@ public class Server {
 	
 	/* keep client connection */
 	List<Socket> clientConnection = new ArrayList<Socket>();
+	List<ObjectOutputStream> clientOutputStream = new ArrayList<ObjectOutputStream>();
+	
+	/* user list */
+	List<ServerUser> userList = new ArrayList<ServerUser>();
 	
 	/* Constructor */
 	public Server() {
@@ -74,16 +76,13 @@ public class Server {
 			try {
 				while (true) {
 					/* listen to the connection of client */
-					System.out.println("client = server.accept();");
 					client = server.accept();
 					
 					/* add client in to list */
-					System.out.println("clientConnection.add(client);");
 					clientConnection.add(client);
 					System.out.println("The no." + clientConnection.size() + " client connected to the server.");
 					
 					/* give the client socket to Sort to judge whether the socket is login or register */ 
-					System.out.println("new Sort(client);");
 					new Sort(client);
 				}
 			} catch (IOException e) {
@@ -107,6 +106,7 @@ public class Server {
 //				BufferedOutputStream bos = new BufferedOutputStream(os);
 				ObjectOutputStream out = new ObjectOutputStream(os);
 //				ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
+				clientOutputStream.add(out);
 				System.out.println("/* start ObjectOutputStream */");
 				
 				/* start ObjectInputStream */
@@ -147,6 +147,7 @@ public class Server {
 					/* close Socket */
 					System.out.println("/* close Socket */");
 					clientConnection.remove(client);
+					clientOutputStream.remove(out);
 					System.out.println("clientConnection.remove(client);");
 					in.close();
 					System.out.println("in.close();");
@@ -160,15 +161,21 @@ public class Server {
 					/* authenticate */
 					if (isInfoRight(firstPacket.getUsername(), firstPacket.getPassword())) {
 						
+						/* create ServerUser */
+						ServerUser user = new ServerUser(firstPacket.getUsername(), client, firstPacket.DEVICE_ID);
+						
+						/* add user to userList */
+						userList.add(user);
+						
 						/* create success info back Packet */
-						backPacket.loginBack(true);
+						backPacket.loginBack(true, generateUserList());
 						
 						/* send back Packet */
 						out.writeObject(backPacket);
 						out.flush();
 						
 						/* pass client to HandleUserPacket to keep connection */
-						new Thread(new HandleUserPacket(client, in, out)).start();
+						new Thread(new HandleUserPacket(user, client, in, out)).start();
 						
 					} else { // when authenticate fail 
 						
@@ -198,11 +205,13 @@ public class Server {
 	
 	/* keep connection and process Packet */
 	class HandleUserPacket extends Thread {
+		ServerUser user;
 		Socket client;
 		ObjectInputStream in;
 		ObjectOutputStream out;
 		
-		public HandleUserPacket(Socket client, ObjectInputStream ois, ObjectOutputStream oos) {
+		public HandleUserPacket(ServerUser user, Socket client, ObjectInputStream ois, ObjectOutputStream oos) {
+			this.user = user;
 			this.client = client;
 			this.in = ois;
 			this.out = oos;
@@ -213,7 +222,7 @@ public class Server {
 			try {
 				
 				/* add Heartbeat Listener */
-				HeartbeatListener hbl = new HeartbeatListener(client, in, out);
+				HeartbeatListener hbl = new HeartbeatListener(user, client, in, out);
 				new Thread(hbl).start();
 				
 				/* listen to client */
@@ -233,6 +242,7 @@ public class Server {
 					if (receiver.TYPE==Packet.HEARTBEAT) {
 						hbl.setLastPacketTime(System.currentTimeMillis());
 						backPacket = new Packet(Packet.HEARTBEAT_BACK, DEVICE_ID);
+						backPacket.heartbeatBack(generateUserList());
 						
 						/* send back Heartbeat */
 						out.writeObject(backPacket);
@@ -242,16 +252,8 @@ public class Server {
 					/* check Chat Room Message */
 					if (receiver.TYPE==Packet.CHATROOM_MESSAGE) {
 						
-						/* create back Packet */
-						backPacket = new Packet(Packet.CHATROOM_MESSAGE_BACK, DEVICE_ID);
-						backPacket.setRoomChat(receiver.getMessage(), receiver.getUsername());
+						new Thread(new SendBackMessage(receiver)).start();
 						
-						/* send message to all client */
-						for (int i = 0; i < clientConnection.size(); i++) {
-							ObjectOutputStream tmpOut = new ObjectOutputStream(new BufferedOutputStream(clientConnection.get(i).getOutputStream()));
-							tmpOut.writeObject(backPacket);
-							tmpOut.flush();
-						}
 					}
 					
 					
@@ -262,13 +264,19 @@ public class Server {
 				
 			} catch (IOException e) {
 				clientConnection.remove(client);
+				clientOutputStream.remove(out);
+				userList.remove(user);
 			} catch (ClassNotFoundException e) {
 				System.err.println("Can't read Object from client.");
 				clientConnection.remove(client);
+				clientOutputStream.remove(out);
+				userList.remove(user);
 				e.printStackTrace();
 			} finally {
 				try {
 					clientConnection.remove(client);
+					clientOutputStream.remove(out);
+					userList.remove(user);
 					in.close();
 					out.close();
 					client.close();
@@ -282,9 +290,39 @@ public class Server {
 		}
 	}
 	
+	/* Send Back Message */
+	class SendBackMessage extends Thread {
+		
+		Packet receiver;
+		
+		public SendBackMessage(Packet packet) {
+			this.receiver = packet;
+		}
+		
+		@Override
+		public void run() {
+			/* create back Packet */
+			Packet backPacket = new Packet(Packet.CHATROOM_MESSAGE_BACK, DEVICE_ID);
+			backPacket.setRoomChat(receiver.getMessage(), receiver.getUsername());
+			
+			/* send message to all client */
+			for (int i = 0; i < clientOutputStream.size(); i++) {
+				try {
+					ObjectOutputStream tmpOut = clientOutputStream.get(i);
+					tmpOut.writeObject(backPacket);
+					tmpOut.flush();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	
 	/* Heartbeat Listener */
 	class HeartbeatListener extends Thread {
+		ServerUser user;
 		Socket client;
 		ObjectInputStream in;
 		ObjectOutputStream out;
@@ -292,7 +330,8 @@ public class Server {
 		final int INTERVAL_TIME = 1*1000;
 		final long TIMEOUT = 40*1000L;
 		
-		public HeartbeatListener(Socket client, ObjectInputStream ois, ObjectOutputStream oos) {
+		public HeartbeatListener(ServerUser user, Socket client, ObjectInputStream ois, ObjectOutputStream oos) {
+			this.user = user;
 			this.client = client;
 			this.in = ois;
 			this.out = oos;
@@ -307,6 +346,8 @@ public class Server {
 				do {
 					if (System.currentTimeMillis()-lastPacketTime>TIMEOUT) {
 						clientConnection.remove(client);
+						clientOutputStream.remove(out);
+						userList.remove(user);
 						in.close();
 						out.close();
 						client.close();
@@ -331,6 +372,15 @@ public class Server {
 		}
 	}
 	
+	/* generate user list */
+	private String[][] generateUserList() {
+		String[][] userList = new String[this.userList.size()][2];
+		for (int i = 0; i < this.userList.size(); i++) {
+			userList[i][0] = this.userList.get(i).USERNAME;
+			userList[i][1] = Long.toString(this.userList.get(i).DEVICE_ID);
+		}
+		return userList;
+	}
 	
 	/*  */
 	private boolean isInfoRight(String username, String password) {

@@ -29,6 +29,7 @@ public class Packet implements Serializable{
 	public final boolean IS_READ_BY_SERVER;
 	
 	/* Variable */
+	private String[][] userList;
 	private String username; // login, register, allChat,
 	private String password; // login, register
 	private boolean isLoginSuccessful; // loginBack, registerBack
@@ -58,6 +59,12 @@ public class Packet implements Serializable{
 	}
 	
 	/* login back */
+	public void loginBack(boolean isSuccessful, String[][] userList) {
+		if (this.TYPE==LOGIN_BACK) {
+			this.isLoginSuccessful = isSuccessful;
+			this.userList = userList;
+		}
+	}
 	public void loginBack(boolean isSuccessful) {
 		if (this.TYPE==LOGIN_BACK) {
 			this.isLoginSuccessful = isSuccessful;
@@ -85,8 +92,23 @@ public class Packet implements Serializable{
 		this.username = username;
 	}
 	
-	public void addMessage(String str) {
+	/* heartbeat back */
+	public void heartbeatBack(String[][] userList) {
+		this.userList = userList;
+	}
+	
+	
+	public void setUserList(String[][] userList) {
+		this.userList = userList;
+	}
+	
+	public String[][] getUserList() {
+		return this.userList;
+	}
+	
+	public void addMessage(String str, String username) {
 		this.message = str;
+		this.username = username;
 	}
 	
 	public String getMessage() {
