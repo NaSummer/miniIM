@@ -58,7 +58,7 @@ public class ChatRoom extends JFrame{
 		int column2X = column1X + column1Width + gap;
 		
 		/* set receivedMessageTextArea property */
-		receivedMessageTextArea = new JTextArea("Welcome, " + client.USERNAME + ".\n");
+		receivedMessageTextArea = new JTextArea("[SYSTEM] Welcome, " + client.USERNAME + ".\n\n");
 		receivedMessageTextArea.setBounds(column1X, row1Y, column1Width, row1Height);
 		receivedMessageTextArea.setLineWrap(true);
 		receivedMessageTextArea.setWrapStyleWord(true);
@@ -164,16 +164,25 @@ public class ChatRoom extends JFrame{
 		public void run() {
 			
 			/* add self first */
-			users.add(client.USERNAME);
-			userList.setListData(users);
+//			users.add(client.USERNAME);
+//			userList.setListData(users);
+			String[][] clientUserList = client.getUserList();
+			for (int i = 0; i < clientUserList.length; i++) {
+				if (!users.contains(clientUserList[i][0])) {
+					users.add(clientUserList[i][0]);
+					userList.setListData(users);
+				}
+			}
 			
 			while (true) {
-				String[][] clientUserList = client.getUserList();
+				clientUserList = client.getUserList();
 				for (int i = 0; i < clientUserList.length; i++) {
 					if (!users.contains(clientUserList[i][0])) {
 						users.add(clientUserList[i][0]);
 						userList.setListData(users);
-						receivedMessageTextArea.append("User [" + clientUserList[i][0] + "] is online.\n");
+						receivedMessageTextArea.append("[SYSTEM] User [" + clientUserList[i][0] + "] is online.\n\n");
+						/* 自动滚动到最后一行 */
+						receivedMessageTextArea.setCaretPosition(receivedMessageTextArea.getText().length());
 					}
 				}
 				try {
@@ -194,6 +203,8 @@ public class ChatRoom extends JFrame{
 					String[] message = client.messageList.get(0).split(Long.toString(client.DEVICE_ID));
 					receivedMessageTextArea.append("[" + message[0] + "] said:\n  -> " + message[1] + "\n\n");
 					client.messageList.remove(0);
+					/* 自动滚动到最后一行 */
+					receivedMessageTextArea.setCaretPosition(receivedMessageTextArea.getText().length());
 				}
 				try {
 					MessagesListener.sleep(500);
