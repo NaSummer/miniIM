@@ -433,7 +433,7 @@ public class Server {
 	}
 	
 	private void writeUserInfo(String username, String password) {
-		File file = new File("userinfo\\userinfo");
+		File file = new File("userinfo\\userinfo.userinfo");
 		
 		/* if file does not exist, create the new file */
 		if (!file.exists()) {
@@ -462,7 +462,7 @@ public class Server {
 	}
 	
 	private BufferedReader preReadUserInfo() {
-		File file = new File("userinfo\\userinfo");
+		File file = new File("userinfo\\userinfo.userinfo");
 		
 		/* if file does not exist, create the new file */
 		if (!file.exists()) {
